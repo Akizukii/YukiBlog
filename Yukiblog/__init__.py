@@ -1,4 +1,6 @@
 import os
+
+import click
 from flask import Flask
 
 from Yukiblog.blueprints.auth import auth_bp
@@ -46,3 +48,39 @@ def register_shell_context(app):
 
 def register_template_context(app):
     pass
+
+
+def register_commands(app):
+    @app.cli.command()
+    @click.option('--drop', is_flag=True, help='Create after drop')
+    def initdb(drop):
+        if drop:
+            click.confirm('Will delete the database,continue?', abort=True)
+            db.drop_all()
+            click.echo('Drop database.')
+        db.create_all()
+        click.echo('Init DB')
+
+    @app.cli.command()
+    @click.option('--category', default=10, help='spawn category,default 10')
+    @click.option('--post', default=60, help='spawn post, default 60')
+    @click.option('--comment', default=300, help='spawn comment, default 300')
+    def forge(category, post, comment):
+        from Yukiblog.fakes import fake_manager, fake_categories, fake_posts, fake_comments
+        
+        db.drop_all()
+        db.create_all()
+
+        click.echo('gen manager...')
+        fake_manager()
+
+        click.echo('gen category...')
+        fake_comments(category)
+
+        click.echo('gen posts...')
+        fake_posts(post)
+
+        click.echo('gen comment...')
+        fake_comments(comment)
+
+        click.echo('gen over')
